@@ -107,7 +107,7 @@ if sys.platform == "linux" and os.getenv('FPC_IS_RUNNIG_AS_SERVICE', '0') == '1'
     import getpass
 
     pid = str(os.getpid())
-    pidFile = open(f"/run/FunPayCardinal/{getpass.getuser()}/FunPayCardinal.pid", "w")
+    pidFile = open(f"/run/Funpay/{getpass.getuser()}/FunPayCardinal.pid", "w")
     pidFile.write(pid)
     pidFile.close()
 
