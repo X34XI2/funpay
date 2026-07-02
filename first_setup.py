@@ -228,7 +228,7 @@ def first_setup():
             if not username.lower().startswith("funpay"):
                 print(
                     f"\n{Fore.CYAN}{Style.BRIGHT}@username бота должен начинаться с \"funpay\"! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
-                continue
+                #continue
         except Exception as ex:
             s = ""
             if str(ex):
