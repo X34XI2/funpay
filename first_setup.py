@@ -229,7 +229,6 @@ def first_setup():
                 print(
                     f"\n{Fore.CYAN}{Style.BRIGHT}@username бота должен начинаться с \"funpay\"! {Fore.RED}\(!!˚0˚)/{Style.RESET_ALL}")
                 #continue
-                break
         except Exception as ex:
             s = ""
             if str(ex):
