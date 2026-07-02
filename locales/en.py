@@ -295,7 +295,7 @@ logfile_error = "❌ Failed to send log file."
 logfile_deleted = "🗑️ Deleted {} logfile(s)."
 
 update_no_tags = "❌ Failed to get the version list. Try again later."
-update_lasted = "✅ You have the latest version FunPayCardinal {}"
+update_lasted = "✅ You have the latest version Funpay {}"
 update_get_error = "❌ Failed to get new version information. Try again later."
 update_available = "<b><u>New version available!</u></b>\n\n\n{}\n\n{}"
 update_update = "To update, enter the command /update"
@@ -439,7 +439,7 @@ adv_description = """🐦 FunPay Cardinal v{}🐦
 🧩 Plugins
 🌟 And much more...
 
-🛠️ Create your own bot: github.com/sidor0912/FunPayCardinal
+🛠️ Create your own bot: github.com/sidor0912/Funpay
 🔄 Updates: @fpc_updates
 🧩 Plugins: @fpc_plugins
 💬 Chat: @funpay_cardinal"""

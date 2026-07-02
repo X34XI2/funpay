@@ -3,11 +3,11 @@ WantedBy=multi-user.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/%i/FunPayCardinal
-ExecStart=/home/%i/pyvenv/bin/python /home/%i/FunPayCardinal/main.py
+WorkingDirectory=/home/%i/Funpay
+ExecStart=/home/%i/pyvenv/bin/python /home/%i/Funpay/main.py
 Restart=always
 RestartSec=10s
-SyslogIdentifier=FunPayCardinal-%i
+SyslogIdentifier=Funpay-%i
 User=%i
 Environment="LANG=en_US.utf8"
 Environment="FPC_IS_RUNNIG_AS_SERVICE=1"
@@ -15,9 +15,9 @@ Environment="FPC_IS_RUNNIG_AS_SERVICE=1"
 ExecStartPre=+/usr/bin/install -m 755 -o root -g root -d /run/Funpay
 ExecStartPre=+/usr/bin/install -m 755 -o %i -g root -d /run/Funpay/%i
 
-PIDFile=/run/Funpay/%i/FunPayCardinal.pid
+PIDFile=/run/Funpay/%i/Funpay.pid
 
-# FunPayCardinal security hardening, all of the below entries are optional, but their existence improves security of your system
+# Funpay security hardening, all of the below entries are optional, but their existence improves security of your system
 # * As stated above this entries are optional, if some of the below entries are not supported by your system, you can safely remove them
 # * If something doesn't work, you can try to remove some of the below entries, but please do it one by one, so you can identify which entry is causing the issue
 DevicePolicy=closed
@@ -29,12 +29,12 @@ PrivateUsers=yes
 ProtectHostname=yes
 # Prevent writes to /usr, /boot, and /etc
 ProtectSystem=full
-ReadWritePaths=/home/%i/FunPayCardinal /home/%i/pyvenv -/run/Funpay
+ReadWritePaths=/home/%i/Funpay /home/%i/pyvenv -/run/Funpay
 # Prevent other services from accessing PID file
 # UMask=0077
-# End of FunPayCardinal security hardening
+# End of Funpay security hardening
 
 [Unit]
 After=network.target
-Description=FunPayCardinal Bot Service (on %I)
-Documentation=https://github.com/sidor0912/FunPayCardinal/blob/main/README.md
+Description=Funpay Bot Service (on %I)
+Documentation=https://github.com/sidor0912/Funpay/blob/main/README.md

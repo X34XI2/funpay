@@ -754,7 +754,7 @@ def edit_plugin(c: Cardinal, uuid: str, offset: int, ask_to_delete: bool = False
 
 def links(language: None | str = None) -> K:
     return K().add(B(_("lnk_github", language=language),
-                     url="https://github.com/sidor0912/FunPayCardinal")) \
+                     url="https://github.com/sidor0912/Funpay")) \
         .add(B(_("lnk_updates", language=language), url="https://t.me/fpc_updates")) \
         .add(B(_("mm_plugins", language=language), url="https://t.me/fpc_plugins")) \
         .add(B(_("lnk_chat", language=language), url="https://t.me/funpay_cardinal"))
