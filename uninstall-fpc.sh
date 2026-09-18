@@ -5,7 +5,6 @@
 #   sudo ./uninstall-fpc.sh <username>              # обычное удаление (спросит подтверждение)
 #   sudo ./uninstall-fpc.sh <username> --yes        # без вопросов (для автоматизации)
 #   sudo ./uninstall-fpc.sh <username> --purge-user # + удалить самого пользователя (userdel -r)
-#   sudo ./uninstall-fpc.sh <username> --keep-configs # не удалять резервную копию конфигов
 #
 # Что удаляется:
 #   - сервис Funpay@<username> (stop, disable, симлинк/файл юнита)
@@ -19,9 +18,10 @@
 #   - репозиторий deadsnakes - сообщим, но удалять не будем (вдруг нужен не только FPC)
 #   - docker-контейнеры - если ставил через docker-compose, он подскажет команду
 #
-# ВАЖНО: перед удалением конфиги (/home/<username>/Funpay/configs) копируются в
-#        /root/fpc-configs-backup-<username>-<дата>. Без них восстановление = полная
-#        перенастройка бота (токен, пароль, golden_key, настройки FunPay).
+# ВНИМАНИЕ: удаление необратимо. Каталог /home/<username>/Funpay сносится целиком,
+#          включая configs/ (токен бота, пароль, golden_key, настройки FunPay).
+#          Если конфиги нужны - скопируй их САМ ДО запуска скрипта:
+#            sudo cp -r /home/<username>/Funpay/configs /root/fpc-configs-backup
 
 set -u
 
@@ -34,14 +34,12 @@ RESET='\033[0m'
 USERNAME=""
 ASSUME_YES=0
 PURGE_USER=0
-KEEP_CONFIGS=0
 
 # ---------- разбор аргументов ----------
 for arg in "$@"; do
   case "$arg" in
     --yes|-y)        ASSUME_YES=1 ;;
     --purge-user)    PURGE_USER=1 ;;
-    --keep-configs)  KEEP_CONFIGS=1 ;;
     -h|--help)
       sed -n '2,30p' "$0"
       exit 0
@@ -108,29 +106,6 @@ if [ "$ASSUME_YES" -ne 1 ]; then
     [yY]|[yY][eE][sS]) ;;
     *) echo -e "${CYAN}Отменено, ничего не тронуто.${RESET}"; exit 0 ;;
   esac
-fi
-
-# ---------- бэкап конфигов ----------
-CONFIG_SRC="$BOT_DIR/configs"
-if [ -d "$CONFIG_SRC" ]; then
-  BACKUP_DIR="/root/fpc-configs-backup-$USERNAME-$(date +%Y%m%d-%H%M%S)"
-  if cp -r "$CONFIG_SRC" "$BACKUP_DIR"; then
-    chmod -R go-rwx "$BACKUP_DIR"
-    echo -e "${GREEN}Конфиги сохранены: $BACKUP_DIR${RESET}"
-    echo -e "${CYAN}Токен бота и ключи FunPay лежат там в открытом виде - убери в надёжное место и удали копию, когда не нужна.${RESET}"
-  else
-    echo -e "${RED}Не удалось сохранить конфиги.${RESET}"
-    if [ "$ASSUME_YES" -ne 1 ]; then
-      echo -ne "${CYAN}Продолжить удаление без бэкапа? [y/n]: ${RESET}"
-      read -r cont
-      case "$cont" in
-        [yY]|[yY][eE][sS]) ;;
-        *) echo -e "${CYAN}Отменено.${RESET}"; exit 0 ;;
-      esac
-    fi
-  fi
-else
-  echo -e "${YELLOW}Каталог конфигов не найден ($CONFIG_SRC) - бэкапить нечего.${RESET}"
 fi
 
 # ---------- остановка сервиса ----------
@@ -208,10 +183,6 @@ fi
 if command -v docker >/dev/null 2>&1 && docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qi -E 'fpc|funpay|cardinal'; then
   echo -e "  - найден docker-контейнер с похожим именем. Если ставил через docker-compose:"
   echo -e "      cd <каталог с docker-compose.yml> && sudo docker compose down -v"
-fi
-if [ "$KEEP_CONFIGS" -eq 0 ]; then
-  echo -e "  - бэкап конфигов в /root/fpc-configs-backup-$USERNAME-* (код для удаления когда не нужен):"
-  echo -e "      sudo rm -rf /root/fpc-configs-backup-$USERNAME-*"
 fi
 
 echo -e "\n${CYAN}Логи, если что-то пошло не так:${RESET}"
