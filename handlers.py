@@ -599,7 +599,12 @@ def deliver_goods(c: Cardinal, e: NewOrderEvent, *args):
             if c.multidelivery_enabled and not cfg_obj.getboolean("disableMultiDelivery"):
                 amount = e.order.amount if e.order.amount else 1
             products, goods_left = cardinal_tools.get_products(f"storage/products/{file_name}", amount)
-            delivery_text = delivery_text.replace("$product", "\n".join(products).replace("\\n", "\n"))
+            # Покупателю отдаем товар без служебного префикса ID (например "ACC-0001 | ").
+            # Полная строка остается в e.full_products - она нужна плагинам (например, аренде),
+            # чтобы понять, какой именно аккаунт ушел.
+            setattr(e, "full_products", list(products))
+            public_products = [p.split("|", 1)[1].strip() if "|" in p else p for p in products]
+            delivery_text = delivery_text.replace("$product", "\n".join(public_products).replace("\\n", "\n"))
     except Exception as exc:
         logger.error(
             f"Произошла ошибка при получении товаров для заказа $YELLOW{e.order.id}: {str(exc)}$RESET")  # locale
