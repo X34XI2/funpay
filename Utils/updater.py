@@ -36,121 +36,74 @@ class Release:
 
 
 # Получение данных о новом релизе
-def get_tags(current_tag: str) -> list[str] | None:
+def get_latest_releases(limit: int = 10) -> list[Release] | None:
     """
-    Получает все теги с GitHub репозитория.
-    :param current_tag: текущий тег.
+    Получает последние релизы репозитория, отсортированные от самого свежего к старому.
 
-    :return: список тегов.
-    """
-    try:
-        page = 1
-        json_response: list[dict] = []
-        while not any([el.get("name") == current_tag for el in json_response]):
-            if page != 1:
-                time.sleep(1)
-            response = requests.get(f"https://api.github.com/repos/X34XI2/funpay/tags?page={page}",
-                                    headers=HEADERS)
-            if not response.status_code == 200 or not response.json():
-                logger.debug(f"Update status code is {response.status_code}!")
-                return None
-            else:
-                json_response.extend(response.json())
-                page += 1
-        tags = [i.get("name") for i in json_response]
-        return tags or None
-    except:
-        logger.debug("TRACEBACK", exc_info=True)
-        return None
+    Сортировка идёт по дате публикации (published_at), а не по порядку страниц GitHub:
+    в форке теги расставлены не в хронологическом порядке, поэтому позиция в списке
+    тегов ничего не значит.
 
+    :param limit: сколько последних релизов вернуть.
 
-def get_next_tag(tags: list[str], current_tag: str):
-    """
-    Ищет след. тег после переданного.
-    Если не находит текущий тег, возвращает первый.
-    Если текущий тег - последний, возвращает None.
-
-    :param tags: список тегов.
-    :param current_tag: текущий тег.
-
-    :return: след. тег / первый тег / None
+    :return: список релизов или None, если получить данные не удалось.
     """
     try:
-        curr_index = tags.index(current_tag)
-    except ValueError:
-        return tags[len(tags) - 1]
+        response = requests.get("https://api.github.com/repos/X34XI2/funpay/releases?per_page=100",
+                                headers=HEADERS)
+        if response.status_code != 200:
+            logger.debug(f"Update status code is {response.status_code}!")
+            return None
 
-    if not curr_index:
-        return None
-    return tags[curr_index - 1]
+        releases_raw = response.json()
+        if not releases_raw:
+            logger.debug("Releases list is empty!")
+            return None
 
+        def published_at(release: dict) -> str:
+            # пустая дата уводится в начало, чтобы не считаться свежей
+            return release.get("published_at") or release.get("created_at") or ""
 
-def get_releases(from_tag: str) -> list[Release] | None:
-    """
-    Получает данные о доступных релизах, начиная с тега.
+        releases_raw.sort(key=published_at, reverse=True)
 
-    :param from_tag: тег релиза, с которого начинать поиск.
-
-    :return: данные релизов.
-    """
-    try:
-        page = 1
-        json_response: list[dict] = []
-        while not any([el.get("tag_name") == from_tag for el in json_response]):
-            if page != 1:
-                time.sleep(1)
-            response = requests.get(f"https://api.github.com/repos/X34XI2/funpay/releases?page={page}",
-                                    headers=HEADERS)
-            if not response.status_code == 200 or not response.json():
-                logger.debug(f"Update status code is {response.status_code}!")
-                return None
-            else:
-                json_response.extend(response.json())
-                page += 1
         result = []
-        to_append = False
-        for el in json_response[::-1]:
-            if (name := el.get("tag_name")) == from_tag:
-                to_append = True
-
-            if to_append:
-                description = el.get("body")
-                sources = el.get("zipball_url")
-                if "#unskippable" in description:
-                    to_append = False
-                release = Release(name, description, sources)
-                result.append(release)
-                if not to_append:
-                    break
-        return result if result else None
+        for el in releases_raw[:limit]:
+            name = el.get("tag_name") or el.get("name") or "?"
+            description = el.get("body") or ""
+            sources = el.get("zipball_url")
+            if not sources:
+                continue
+            result.append(Release(name, description, sources))
+        return result or None
     except:
         logger.debug("TRACEBACK", exc_info=True)
         return None
 
 
+# Получение данных о новом релизе
 def get_new_releases(current_tag) -> int | list[Release]:
     """
     Проверяет на наличие обновлений.
 
-    :param current_tag: тег текущей версии.
+    :param current_tag: тег текущей версии (используется только для информации).
 
     :return: список объектов релизов или код ошибки:
-        1 - произошла ошибка при получении списка тегов.
-        2 - текущий тег является последним.
+        1 - произошла ошибка при получении списка релизов.
+        2 - обновлений нет (текущий релиз - самый свежий).
         3 - не удалось получить данные о релизе.
     """
-    tags = get_tags(current_tag)
-    if tags is None:
+    releases = get_latest_releases()
+    if releases is None:
         return 1
 
-    next_tag = get_next_tag(tags, current_tag)
-    if next_tag is None:
+    # Тег текущей версии в форке не совпадает с тегами релизов (в коде "v0.1.17.8",
+    # в репозитории - "1"/"2"/"update1"), поэтому ищем релиз, у которого имя/тег
+    # совпадает с текущей версией. Если не нашли - считаем, что стоит не релизная
+    # сборка, и предлагаем просто самый свежий релиз.
+    if current_tag and any(r.name == current_tag.lstrip("v") or r.name == current_tag for r in releases):
         return 2
 
-    releases = get_releases(next_tag)
-    if releases is None:
-        return 3
-    return releases
+    return releases[:1]
 
 
 #  Загрузка нового релиза

@@ -603,7 +603,7 @@ class TGBot:
         if isinstance(releases, int):
             errors = {
                 1: ["update_no_tags", ()],
-                2: ["update_lasted", (curr_tag,)],
+                2: ["update_lasted", (curr_tag, ())],
                 3: ["update_get_error", ()],
             }
             self.bot.send_message(m.chat.id, _(errors[releases][0], *errors[releases][1]))
@@ -611,7 +611,7 @@ class TGBot:
 
         if not self.create_backup(m):
             return
-        release = releases[-1]
+        release = releases[0]  # список отсортирован от самого свежего релиза
         if updater.download_zip(release.sources_link) \
                 or (release_folder := updater.extract_update_archive()) == 1:
             self.bot.send_message(m.chat.id, _("update_download_error"))
